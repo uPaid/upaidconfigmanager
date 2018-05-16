@@ -112,44 +112,48 @@ class GetConfigCommand extends Command
             curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($curl, CURLOPT_HEADER, false);
             $data = curl_exec($curl);
-            if (!curl_errno($curl) && !$this->cfgService->validate($data, $ext)) {
+
+            if (curl_errno($curl)) {
+                $output->writeln(
+                    'Curl error: ' . curl_errno($curl)
+                    . '. Check http://php.net/manual/en/function.curl-errno.php for more information.'
+                );
+                curl_close($curl);
+
+                return;
+            }
+
+            if (config('upaidpckg.validate_files') && !$this->cfgService->validate($data, $ext)) {
                 $output->writeln('Validation of remote ' . $fileName . ' file failed!');
             } else {
-                if (!curl_errno($curl)) {
-                    $output->writeln(
-                        'Configuration downloaded and validated.'
-                    );
-                    $output->writeln('Creating backup...');
-                    $backupResponse = $this->createBackup($fileName, $appName);
-                    switch ($backupResponse['code']) {
-                        case 0:
-                            $output->writeln(
-                                'File ' . $fileName . ' already backuped!'
-                            );
-                            break;
-                        case 1:
-                            $output->writeln(
-                                'Backup created successfully!'
-                            );
-                            break;
-                        case 2:
-                            $output->writeln('Failed to create backup!');
-                            break;
-                    }
-
-                    $output->writeln('Updating ' . $fileName . ' file...');
-
-                    $message = $this->updateFile($fileName, $data, $appName)
-                        ? 'File update success!'
-                        : 'Failed to update ' . $fileName . ' file!';
-
-                    $output->writeln($message);
-                } else {
-                    $output->writeln(
-                        'Curl error: ' . curl_errno($curl)
-                        . '. Check http://php.net/manual/en/function.curl-errno.php for more information.'
-                    );
+                $output->writeln(
+                    'Configuration downloaded and validated.'
+                );
+                $output->writeln('Creating backup...');
+                $backupResponse = $this->createBackup($fileName, $appName);
+                switch ($backupResponse['code']) {
+                    case 0:
+                        $output->writeln(
+                            'File ' . $fileName . ' already backuped!'
+                        );
+                        break;
+                    case 1:
+                        $output->writeln(
+                            'Backup created successfully!'
+                        );
+                        break;
+                    case 2:
+                        $output->writeln('Failed to create backup!');
+                        break;
                 }
+
+                $output->writeln('Updating ' . $fileName . ' file...');
+
+                $message = $this->updateFile($fileName, $data, $appName)
+                    ? 'File update success!'
+                    : 'Failed to update ' . $fileName . ' file!';
+
+                $output->writeln($message);
             }
             curl_close($curl);
         } catch (\Exception $ex) {

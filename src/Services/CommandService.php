@@ -16,14 +16,11 @@ class CommandService
     public function getFilePath($fileName, $appName)
     {
         $filePath = null;
-        foreach (config('upaidpckg.keys_paths') as $file => $path) {
-            if ($fileName === $file) {
-                if ($fileName === '.env' || $fileName === 'frontend.json') {
-                    $filePath = $path . $fileName;
-                } else {
-                    $filePath =  $path . $appName . '/' . $fileName;
-                }
-            }
+        $keyPaths = config('upaidpckg.keys_paths');
+
+        if (isset($keyPaths[$fileName])) {
+            $path = $keyPaths[$fileName];
+            $filePath =  str_replace('{appName}', $appName, $path) . $fileName;
         }
 
         return $filePath;
