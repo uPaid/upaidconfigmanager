@@ -245,7 +245,7 @@ class GetConfigCommand extends Command
     
     private function setHttpHeader($curl, $fileName)
     {
-        if(strpos($fileName, '.env')){
+        if(strpos($fileName, '.env') !== false){
             curl_setopt($curl, CURLOPT_HTTPHEADER, ['Accept: text/decrypted-env']);
         }
     }
